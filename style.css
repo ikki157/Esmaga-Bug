@@ -1,0 +1,134 @@
+/* Estilos gerais */
+body {
+    background-color: #000; /* Fundo preto para o efeito Matrix */
+    color: #abb2bf;
+    font-family: 'Courier New', Courier, monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden; /* Esconde barras de rolagem */
+}
+
+/* Canvas fica no fundo, cobrindo tudo */
+#matrix-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+
+.game-container {
+    text-align: center;
+    background-color: rgba(33, 37, 43, 0.85); /* Fundo semi-transparente */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    border: 1px solid #61afef;
+    z-index: 10;
+}
+
+h1 { color: #61afef; }
+.info-bar {
+    font-size: 1.2em;
+    margin-bottom: 15px;
+    color: #98c379;
+    display: flex;
+    justify-content: space-around;
+}
+
+/* A tela do jogo */
+#game-screen {
+    width: 800px;
+    height: 500px;
+    background-color: transparent; /* Transparente para ver o canvas */
+    border: 2px solid #61afef;
+    border-radius: 5px;
+    position: relative;
+    overflow: hidden;
+    cursor: crosshair;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#start-button {
+    padding: 15px 30px;
+    font-size: 1.5em;
+    font-family: 'Courier New', Courier, monospace;
+    cursor: pointer;
+    background-color: #98c379;
+    color: #21252b;
+    border: none;
+    border-radius: 5px;
+    transition: transform 0.2s;
+    z-index: 100;
+}
+#start-button:hover { transform: scale(1.05); }
+
+/* --- EFEITO DA MARRETA --- */
+#hammer-effect {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    background-image: url('https://api.iconify.design/mdi/hammer.svg?color=%23c678dd'); /* Ícone de martelo roxo */
+    background-size: contain;
+    background-repeat: no-repeat;
+    display: none; /* Começa escondido */
+    pointer-events: none; /* O clique atravessa o elemento */
+    z-index: 50;
+    /* Centraliza a imagem no cursor */
+    transform: translate(-50%, -50%);
+}
+
+/* --- ESTILO DO BUG "AGRESSIVO" --- */
+.bug {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background-image: url('https://api.iconify.design/mdi/bug.svg?color=%23e06c75'); /* Ícone de bug vermelho */
+    background-size: contain;
+    background-repeat: no-repeat;
+    cursor: pointer;
+    animation: pulse 0.5s infinite; /* Animação de pulsar */
+}
+
+/* Animação para o bug "agressivo" */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* --- ESTILO DOS POWER-UPS --- */
+.powerup {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    cursor: pointer;
+    border-radius: 50%;
+    box-shadow: 0 0 15px gold;
+    transition: transform 0.2s;
+}
+.powerup:hover {
+    transform: scale(1.2);
+}
+.powerup[data-type="pull-request"] {
+    background-color: #fff;
+    background-image: url('https://api.iconify.design/mdi/source-pull.svg?color=%23282c34');
+}
+.powerup[data-type="debugger"] {
+    background-color: #fff;
+    background-image: url('https://api.iconify.design/mdi/pause-circle.svg?color=%2361afef');
+}
+
+.footer {
+    margin-top: 20px;
+    font-size: 0.8em;
+    color: #5c6370;
+}
