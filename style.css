@@ -1,6 +1,12 @@
-/* Estilos gerais */
+/* --- ESTILOS GERAIS E MOBILE-FIRST (BASE) --- */
+:root {
+    --font-size-base: 14px;
+    --font-size-info: 1em;
+    --font-size-title: 1.8em;
+}
+
 body {
-    background-color: #000; /* Fundo preto para o efeito Matrix */
+    background-color: #000;
     color: #abb2bf;
     font-family: 'Courier New', Courier, monospace;
     display: flex;
@@ -8,10 +14,10 @@ body {
     align-items: center;
     height: 100vh;
     margin: 0;
-    overflow: hidden; /* Esconde barras de rolagem */
+    overflow: hidden;
+    font-size: var(--font-size-base);
 }
 
-/* Canvas fica no fundo, cobrindo tudo */
 #matrix-background {
     position: fixed;
     top: 0;
@@ -21,30 +27,51 @@ body {
     z-index: -1;
 }
 
-.game-container {
+#game-container {
+    display: flex;
+    flex-direction: column;
+    width: 95vw; /* Ocupa 95% da largura da tela */
+    height: 98vh; /* Ocupa 98% da altura da tela */
+    max-width: 1200px; /* Limite máximo para telas muito grandes */
     text-align: center;
-    background-color: rgba(33, 37, 43, 0.85); /* Fundo semi-transparente */
-    padding: 20px;
+    background-color: rgba(33, 37, 43, 0.9);
+    padding: 10px;
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     border: 1px solid #61afef;
     z-index: 10;
 }
 
-h1 { color: #61afef; }
-.info-bar {
-    font-size: 1.2em;
-    margin-bottom: 15px;
-    color: #98c379;
-    display: flex;
-    justify-content: space-around;
+h1 {
+    color: #61afef;
+    margin: 5px 0 10px 0;
+    font-size: var(--font-size-title);
 }
 
-/* A tela do jogo */
+.info-bar, .info-bar-bottom {
+    font-size: var(--font-size-info);
+    margin-bottom: 10px;
+    color: #98c379;
+    display: flex;
+    flex-wrap: wrap; /* Permite que os itens quebrem para a linha de baixo */
+    justify-content: space-around;
+    gap: 5px; /* Espaço entre os itens quando quebram a linha */
+}
+.info-bar-bottom { color: #c678dd; }
+
+.score-box {
+    background-color: #282c34;
+    padding: 5px 10px;
+    border-radius: 5px;
+    flex-grow: 1; /* Faz os boxes ocuparem o espaço disponível */
+    text-align: center;
+    white-space: nowrap; /* Evita que o texto quebre no meio */
+}
+
 #game-screen {
-    width: 800px;
-    height: 500px;
-    background-color: transparent; /* Transparente para ver o canvas */
+    width: 100%;
+    flex-grow: 1; /* Ocupa todo o espaço vertical restante */
+    background-color: transparent;
     border: 2px solid #61afef;
     border-radius: 5px;
     position: relative;
@@ -56,79 +83,110 @@ h1 { color: #61afef; }
 }
 
 #start-button {
-    padding: 15px 30px;
-    font-size: 1.5em;
+    padding: 10px 20px;
+    font-size: 1.2em;
     font-family: 'Courier New', Courier, monospace;
     cursor: pointer;
     background-color: #98c379;
     color: #21252b;
     border: none;
     border-radius: 5px;
-    transition: transform 0.2s;
     z-index: 100;
 }
-#start-button:hover { transform: scale(1.05); }
 
-/* --- EFEITO DA MARRETA --- */
-#hammer-effect {
-    position: absolute;
-    width: 80px;
-    height: 80px;
-    background-image: url('https://api.iconify.design/mdi/hammer.svg?color=%23c678dd'); /* Ícone de martelo roxo */
-    background-size: contain;
-    background-repeat: no-repeat;
-    display: none; /* Começa escondido */
-    pointer-events: none; /* O clique atravessa o elemento */
-    z-index: 50;
-    /* Centraliza a imagem no cursor */
-    transform: translate(-50%, -50%);
+.footer { margin-top: auto; padding-top: 10px; font-size: 0.7em; color: #5c6370; }
+
+/* Elementos do jogo mantêm seus estilos... */
+#game-container.shake { animation: shake 0.5s; }
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); }
 }
 
-/* --- ESTILO DO BUG "AGRESSIVO" --- */
+#score-display.popping { animation: pop 0.3s; }
+@keyframes pop {
+    50% { transform: scale(1.2); color: #e5c07b; }
+}
+
+.particle {
+    position: absolute; background-color: #e06c75; width: 5px; height: 5px; border-radius: 50%; pointer-events: none; z-index: 50; transition: all 0.5s ease-out;
+}
+.bug, .boss-bug {
+    position: absolute; background-size: contain; background-repeat: no-repeat; cursor: pointer; will-change: transform;
+}
 .bug {
-    position: absolute;
-    width: 40px;
-    height: 40px;
-    background-image: url('https://api.iconify.design/mdi/bug.svg?color=%23e06c75'); /* Ícone de bug vermelho */
-    background-size: contain;
-    background-repeat: no-repeat;
-    cursor: pointer;
-    animation: pulse 0.5s infinite; /* Animação de pulsar */
+    width: 40px; height: 40px; background-image: url('https://api.iconify.design/mdi/bug.svg?color=%23e06c75'); animation: pulse 0.5s infinite;
 }
-
-/* Animação para o bug "agressivo" */
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
+.boss-bug {
+    width: 70px; height: 70px; background-image: url('https://api.iconify.design/mdi/bug-outline.svg?color=%23e5c07b'); animation: pulse-boss 0.4s infinite;
 }
+.bug.hit, .boss-bug.hit { animation: hit 0.2s; }
+@keyframes pulse { 50% { transform: scale(1.1); } }
+@keyframes pulse-boss { 50% { transform: scale(1.05); filter: brightness(1.5); } }
+@keyframes hit { 50% { filter: brightness(3); } }
 
-/* --- ESTILO DOS POWER-UPS --- */
 .powerup {
-    position: absolute;
-    width: 50px;
-    height: 50px;
-    background-size: contain;
-    background-repeat: no-repeat;
-    cursor: pointer;
-    border-radius: 50%;
-    box-shadow: 0 0 15px gold;
-    transition: transform 0.2s;
+    position: absolute; width: 45px; height: 45px; background-size: contain; background-repeat: no-repeat; cursor: pointer; border-radius: 50%; box-shadow: 0 0 15px gold; transition: transform 0.2s;
 }
-.powerup:hover {
-    transform: scale(1.2);
-}
-.powerup[data-type="pull-request"] {
-    background-color: #fff;
-    background-image: url('https://api.iconify.design/mdi/source-pull.svg?color=%23282c34');
-}
-.powerup[data-type="debugger"] {
-    background-color: #fff;
-    background-image: url('https://api.iconify.design/mdi/pause-circle.svg?color=%2361afef');
+.powerup:hover { transform: scale(1.2); }
+.powerup[data-type="pull-request"] { background-color: #fff; background-image: url('https://api.iconify.design/mdi/source-pull.svg?color=%23282c34'); }
+.powerup[data-type="debugger"] { background-color: #fff; background-image: url('https://api.iconify.design/mdi/pause-circle.svg?color=%2361afef'); }
+
+
+/* --- MEDIA QUERY PARA TABLETS (Telas a partir de 768px de largura) --- */
+@media (min-width: 768px) {
+    :root {
+        --font-size-base: 16px;
+        --font-size-title: 2.2em;
+    }
+    #game-container {
+        width: 85vw;
+        padding: 20px;
+    }
+    .score-box {
+        padding: 8px 20px;
+    }
 }
 
-.footer {
-    margin-top: 20px;
-    font-size: 0.8em;
-    color: #5c6370;
+/* --- MEDIA QUERY PARA DESKTOPS (Telas a partir de 1024px de largura) --- */
+@media (min-width: 1024px) {
+    :root {
+        --font-size-base: 18px;
+        --font-size-title: 2.5em;
+    }
+    #game-container {
+        flex-direction: row; /* Layout em colunas */
+        flex-wrap: wrap;
+        width: 90vw;
+        height: auto;
+        max-height: 95vh;
+        align-items: flex-start;
+    }
+    #game-screen {
+        width: 70%; /* Tela do jogo ocupa 70% */
+        height: 80vh;
+        max-height: 800px;
+        order: 2; /* Coloca a tela do jogo na direita */
+    }
+    .game-info-wrapper { /* Novo wrapper para as informações */
+        width: 30%;
+        padding-right: 20px;
+        order: 1; /* Coloca as informações na esquerda */
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    .info-bar, .info-bar-bottom {
+        flex-direction: column;
+        width: 100%;
+    }
+    h1 {
+        width: 100%;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .footer {
+        width: 100%;
+        order: 3;
+        padding-top: 10px;
+    }
 }
