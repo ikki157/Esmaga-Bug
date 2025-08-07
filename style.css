@@ -5,73 +5,67 @@
     --font-size-title: 1.8em;
 }
 
-body {
+body, html {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
     background-color: #000;
     color: #abb2bf;
     font-family: 'Courier New', Courier, monospace;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    overflow: hidden;
-    font-size: var(--font-size-base);
 }
 
 #matrix-background {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
 }
 
 #game-container {
+    position: relative;
+    z-index: 2;
     display: flex;
     flex-direction: column;
-    width: 95vw; /* Ocupa 95% da largura da tela */
-    height: 98vh; /* Ocupa 98% da altura da tela */
-    max-width: 1200px; /* Limite máximo para telas muito grandes */
-    text-align: center;
-    background-color: rgba(33, 37, 43, 0.9);
+    width: 100%;
+    height: 100%;
     padding: 10px;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-    border: 1px solid #61afef;
-    z-index: 10;
+    box-sizing: border-box; /* Garante que padding não aumente o tamanho total */
+}
+
+.game-info-wrapper {
+    flex-shrink: 0; /* Impede que o container de info encolha */
+    padding-bottom: 10px;
 }
 
 h1 {
     color: #61afef;
-    margin: 5px 0 10px 0;
+    margin: 0 0 10px 0;
     font-size: var(--font-size-title);
+    text-align: center;
 }
 
 .info-bar, .info-bar-bottom {
     font-size: var(--font-size-info);
-    margin-bottom: 10px;
     color: #98c379;
     display: flex;
-    flex-wrap: wrap; /* Permite que os itens quebrem para a linha de baixo */
-    justify-content: space-around;
-    gap: 5px; /* Espaço entre os itens quando quebram a linha */
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 5px;
 }
+
 .info-bar-bottom { color: #c678dd; }
 
 .score-box {
     background-color: #282c34;
     padding: 5px 10px;
     border-radius: 5px;
-    flex-grow: 1; /* Faz os boxes ocuparem o espaço disponível */
+    flex: 1 1 120px; /* Flex-grow, Flex-shrink, Flex-basis */
     text-align: center;
-    white-space: nowrap; /* Evita que o texto quebre no meio */
+    white-space: nowrap;
 }
 
 #game-screen {
-    width: 100%;
     flex-grow: 1; /* Ocupa todo o espaço vertical restante */
-    background-color: transparent;
+    min-height: 200px; /* Altura mínima para não sumir */
+    background-color: rgba(40, 44, 52, 0.75);
     border: 2px solid #61afef;
     border-radius: 5px;
     position: relative;
@@ -83,9 +77,8 @@ h1 {
 }
 
 #start-button {
-    padding: 10px 20px;
-    font-size: 1.2em;
-    font-family: 'Courier New', Courier, monospace;
+    padding: 15px 30px;
+    font-size: 1.5em;
     cursor: pointer;
     background-color: #98c379;
     color: #21252b;
@@ -94,99 +87,50 @@ h1 {
     z-index: 100;
 }
 
-.footer { margin-top: auto; padding-top: 10px; font-size: 0.7em; color: #5c6370; }
-
-/* Elementos do jogo mantêm seus estilos... */
-#game-container.shake { animation: shake 0.5s; }
-@keyframes shake {
-    10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); }
-}
-
-#score-display.popping { animation: pop 0.3s; }
-@keyframes pop {
-    50% { transform: scale(1.2); color: #e5c07b; }
-}
-
-.particle {
-    position: absolute; background-color: #e06c75; width: 5px; height: 5px; border-radius: 50%; pointer-events: none; z-index: 50; transition: all 0.5s ease-out;
-}
+/* --- ESTILOS DOS ELEMENTOS DO JOGO --- */
 .bug, .boss-bug {
-    position: absolute; background-size: contain; background-repeat: no-repeat; cursor: pointer; will-change: transform;
+    position: absolute; background-size: contain; background-repeat: no-repeat; cursor: pointer;
 }
-.bug {
-    width: 40px; height: 40px; background-image: url('https://api.iconify.design/mdi/bug.svg?color=%23e06c75'); animation: pulse 0.5s infinite;
-}
-.boss-bug {
-    width: 70px; height: 70px; background-image: url('https://api.iconify.design/mdi/bug-outline.svg?color=%23e5c07b'); animation: pulse-boss 0.4s infinite;
-}
-.bug.hit, .boss-bug.hit { animation: hit 0.2s; }
-@keyframes pulse { 50% { transform: scale(1.1); } }
-@keyframes pulse-boss { 50% { transform: scale(1.05); filter: brightness(1.5); } }
-@keyframes hit { 50% { filter: brightness(3); } }
+.bug { width: 40px; height: 40px; background-image: url('https://api.iconify.design/mdi/bug.svg?color=%23e06c75'); }
+.boss-bug { width: 70px; height: 70px; background-image: url('https://api.iconify.design/mdi/bug-outline.svg?color=%23e5c07b'); }
 
 .powerup {
-    position: absolute; width: 45px; height: 45px; background-size: contain; background-repeat: no-repeat; cursor: pointer; border-radius: 50%; box-shadow: 0 0 15px gold; transition: transform 0.2s;
+    position: absolute; width: 45px; height: 45px; background-size: contain; background-repeat: no-repeat; cursor: pointer; border-radius: 50%; box-shadow: 0 0 15px gold;
 }
-.powerup:hover { transform: scale(1.2); }
 .powerup[data-type="pull-request"] { background-color: #fff; background-image: url('https://api.iconify.design/mdi/source-pull.svg?color=%23282c34'); }
 .powerup[data-type="debugger"] { background-color: #fff; background-image: url('https://api.iconify.design/mdi/pause-circle.svg?color=%2361afef'); }
 
-
-/* --- MEDIA QUERY PARA TABLETS (Telas a partir de 768px de largura) --- */
-@media (min-width: 768px) {
-    :root {
-        --font-size-base: 16px;
-        --font-size-title: 2.2em;
-    }
-    #game-container {
-        width: 85vw;
-        padding: 20px;
-    }
-    .score-box {
-        padding: 8px 20px;
-    }
-}
+/* --- ANIMAÇÕES --- */
+.bug, .boss-bug { animation: pulse 0.8s infinite alternate; }
+.boss-bug { animation-duration: 0.6s; }
+@keyframes pulse { to { transform: scale(1.1); } }
+.hit { animation: hit 0.2s; }
+@keyframes hit { 50% { filter: brightness(3); } }
 
 /* --- MEDIA QUERY PARA DESKTOPS (Telas a partir de 1024px de largura) --- */
 @media (min-width: 1024px) {
     :root {
-        --font-size-base: 18px;
-        --font-size-title: 2.5em;
+        --font-size-base: 16px;
     }
     #game-container {
-        flex-direction: row; /* Layout em colunas */
-        flex-wrap: wrap;
-        width: 90vw;
-        height: auto;
-        max-height: 95vh;
-        align-items: flex-start;
+        flex-direction: row;
+        gap: 20px;
+        align-items: stretch;
+        width: 95vw;
+        height: 95vh;
+        max-width: 1400px;
     }
-    #game-screen {
-        width: 70%; /* Tela do jogo ocupa 70% */
-        height: 80vh;
-        max-height: 800px;
-        order: 2; /* Coloca a tela do jogo na direita */
-    }
-    .game-info-wrapper { /* Novo wrapper para as informações */
-        width: 30%;
-        padding-right: 20px;
-        order: 1; /* Coloca as informações na esquerda */
+    .game-info-wrapper {
+        flex: 0 0 280px; /* Não cresce, não encolhe, base de 280px */
         display: flex;
         flex-direction: column;
-        gap: 15px;
+        justify-content: center;
+        padding-bottom: 0;
     }
     .info-bar, .info-bar-bottom {
         flex-direction: column;
-        width: 100%;
     }
-    h1 {
-        width: 100%;
-        text-align: center;
-        margin-bottom: 20px;
-    }
-    .footer {
-        width: 100%;
-        order: 3;
-        padding-top: 10px;
+    #game-screen {
+        min-height: initial; /* Reseta a altura mínima */
     }
 }

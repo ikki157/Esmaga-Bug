@@ -3,31 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Esmaga-Bug: Edição ES 2024</title>
+    <title>Esmaga-Bug: Edição Estável</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <canvas id="matrix-background"></canvas>
 
-    <div class="game-container">
-        <h1>Esmaga-Bug!</h1>
-        <div class="info-bar">
-            <span>Pontuação: <span id="score-display">0</span></span>
-            <span>Tempo: <span id="timer-display">60</span></span>
+    <div id="game-container">
+        <div class="game-info-wrapper">
+            <h1>Esmaga-Bug!</h1>
+            <div class="info-bar">
+                <span class="score-box">HI-SCORE: <span id="highscore-display">0</span></span>
+                <span class="score-box">SCORE: <span id="score-display">0</span></span>
+            </div>
+            <div class="info-bar-bottom">
+                <span class="score-box">TEMPO: <span id="timer-display">60</span></span>
+                <span class="score-box">COMBO: <span id="combo-display">x1</span></span>
+            </div>
         </div>
 
         <div id="game-screen">
             <button id="start-button">Iniciar Jogo</button>
-            <div id="hammer-effect"></div>
         </div>
+    </div>
 
-        <div class="footer">
+    <div class="footer">
             <p>Desenvolvido para o Software Freedom Day</p>
             <p>Um projeto de @dev-netinho</p>
         </div>
     </div>
 
+    <audio id="sound-music" src="https://www.chosic.com/wp-content/uploads/2021/07/The-Road-to-the-Light.mp3" loop></audio>
+    <audio id="sound-squash" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_2b33947c6a.mp3"></audio>
+    <audio id="sound-start" src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_c3b77b8c64.mp3"></audio>
+    <audio id="sound-gameover" src="https://cdn.pixabay.com/download/audio/2022/10/24/audio_39b047f3b8.mp3"></audio>
+    <audio id="sound-powerup" src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_a5a87c1a32.mp3"></audio>
+    <audio id="sound-boss-hit" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_a29b35b674.mp3"></audio>
+    
     <script src="script.js"></script>
 </body>
 </html>
