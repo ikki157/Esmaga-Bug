@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let timeLeft = 60;
     let combo = 1;
     let lastSquashTime = 0;
-    let bugCreationIntervalMs = 1900;
+    let bugCreationIntervalMs = 1800; // Aumentamos o tempo inicial entre spawns
     let isGameRunning = false;
     let lastTime = 0;
     let timeToNextBug = 0;
@@ -38,6 +38,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let highScore = localStorage.getItem('bugSmasherHighScore') || 0;
     let gameLoopId;
     let timerId;
+    
+    // NOVO: Variável para controlar a velocidade dos bugs de forma linear
+    let velocidadeAtual = 1.2;
 
     // --- CONFIGURAÇÕES DO CANVAS DE FUNDO ---
     canvas.width = window.innerWidth;
@@ -47,14 +50,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let drops = Array(Math.floor(canvas.width / fontSize)).fill(1);
 
     // --- FUNÇÕES AUXILIARES ---
-
-    // Função para tocar som, reiniciando se já estiver tocando
     function playSound(sound) {
         sound.currentTime = 0;
         sound.play().catch(error => console.log(`Erro ao tocar som: ${error.message}`));
     }
 
-    // Função para desenhar o efeito "Matrix" no fundo
     function drawMatrix() {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -68,22 +68,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Função "debounce" para otimizar o evento de redimensionar a tela
     function debounce(func, wait) {
         let timeout;
         return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
+            const later = () => { clearTimeout(timeout); func(...args); };
             clearTimeout(timeout);
             timeout = setTimeout(later, wait);
         };
     }
 
     // --- LÓGICA DE CRIAÇÃO E ATUALIZAÇÃO DOS ELEMENTOS DO JOGO ---
-
-    // Cria as partículas de "explosão" ao esmagar um bug
     function createParticles(x, y, count) {
         for (let i = 0; i < count; i++) {
             const p = document.createElement('div');
@@ -99,14 +93,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Atualiza a posição e a vida das partículas
     function updateParticles() {
         for (let i = particles.length - 1; i >= 0; i--) {
             const p = particles[i];
-            p.x += p.vx;
-            p.y += p.vy;
-            p.life--;
-            p.vy += 0.1; 
+            p.x += p.vx; p.y += p.vy; p.life--; p.vy += 0.1; 
             p.element.style.transform = `translate(${p.x}px, ${p.y}px)`;
             p.element.style.opacity = p.life / 30;
             if (p.life <= 0) {
@@ -115,68 +105,66 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
-
-    // Cria um bug (normal ou boss) em uma borda aleatória da tela
+    
+    // ==================================================================
+    // FUNÇÃO createBug TOTALMENTE REESCRITA E CORRIGIDA
+    // ==================================================================
     function createBug() {
-    const isBoss = Math.random() < 0.1 && bugs.filter(b => b.isBoss).length === 0;
-    const element = document.createElement('div');
-    const edge = Math.floor(Math.random() * 4);
-    let x, y, vx, vy;
+        const isBoss = Math.random() < 0.1 && bugs.filter(b => b.isBoss).length === 0;
+        const element = document.createElement('div');
+        const edge = Math.floor(Math.random() * 4);
+        let x, y, vx, vy;
 
-    // Define uma velocidade base. A velocidade real será um pouco aleatória.
-    // Diminua este valor para deixar os bugs mais lentos no geral.
-    const velocidadeBase = 1.5; 
+        // A velocidade agora é baseada na variável global controlada
+        const speed = velocidadeAtual * (isBoss ? 0.7 : 1); // Boss é um pouco mais lento
 
-    // Define a posição inicial e a velocidade com base na borda de onde o bug "nasce"
-    switch (edge) {
-        case 0: // Esquerda
-            x = -80;
-            y = Math.random() * gameScreen.clientHeight;
-            vx = velocidadeBase * (Math.random() * 0.5 + 0.75); // Sempre positivo (para a direita)
-            vy = (Math.random() - 0.5) * velocidadeBase; // Variação vertical
-            break;
-        case 1: // Direita
-            x = gameScreen.clientWidth + 80;
-            y = Math.random() * gameScreen.clientHeight;
-            vx = -velocidadeBase * (Math.random() * 0.5 + 0.75); // Sempre negativo (para a esquerda)
-            vy = (Math.random() - 0.5) * velocidadeBase; // Variação vertical
-            break;
-        case 2: // Topo
-            y = -80;
-            x = Math.random() * gameScreen.clientWidth;
-            vy = velocidadeBase * (Math.random() * 0.5 + 0.75); // Sempre positivo (para baixo)
-            vx = (Math.random() - 0.5) * velocidadeBase; // Variação horizontal
-            break;
-        case 3: // Base
-        default:
-            y = gameScreen.clientHeight + 80;
-            x = Math.random() * gameScreen.clientWidth;
-            vy = -velocidadeBase * (Math.random() * 0.5 + 0.75); // Sempre negativo (para cima)
-            vx = (Math.random() - 0.5) * velocidadeBase; // Variação horizontal
-            break;
+        switch (edge) {
+            case 0: // Esquerda
+                x = -80;
+                y = Math.random() * gameScreen.clientHeight;
+                vx = speed;
+                vy = (Math.random() - 0.5) * speed * 0.5; // Movimento diagonal mais suave
+                break;
+            case 1: // Direita
+                x = gameScreen.clientWidth + 80;
+                y = Math.random() * gameScreen.clientHeight;
+                vx = -speed;
+                vy = (Math.random() - 0.5) * speed * 0.5;
+                break;
+            case 2: // Topo
+                y = -80;
+                x = Math.random() * gameScreen.clientWidth;
+                vy = speed;
+                vx = (Math.random() - 0.5) * speed * 0.5;
+                break;
+            default: // Base
+                y = gameScreen.clientHeight + 80;
+                x = Math.random() * gameScreen.clientWidth;
+                vy = -speed;
+                vx = (Math.random() - 0.5) * speed * 0.5;
+                break;
+        }
+        
+        const bug = {
+            element, x, y, vx, vy, isBoss,
+            health: isBoss ? 5 : 1,
+        };
+        element.classList.add(isBoss ? 'boss-bug' : 'bug');
+        element.style.transform = `translate(${x}px, ${y}px)`;
+        element.addEventListener('click', (e) => {
+            e.stopPropagation();
+            squash(bug);
+        });
+        bugs.push(bug);
+        gameScreen.appendChild(element);
     }
     
-    const bug = {
-        element, x, y, vx, vy,
-        isBoss: isBoss,
-        health: isBoss ? 5 : 1,
-    };
-    element.classList.add(isBoss ? 'boss-bug' : 'bug');
-    element.style.transform = `translate(${x}px, ${y}px)`;
-    element.addEventListener('click', (e) => {
-        e.stopPropagation(); // Impede que o clique se propague para a tela
-        squash(bug);
-    });
-    bugs.push(bug);
-    gameScreen.appendChild(element);
-}
-    
-    // Move os bugs na tela
     function updateBugs(deltaTime) {
         for (let i = bugs.length - 1; i >= 0; i--) {
             const bug = bugs[i];
-            bug.x += bug.vx * deltaTime / 16;
-            bug.y += bug.vy * deltaTime / 16;
+            // A normalização com deltaTime garante que o movimento seja suave e independente do FPS
+            bug.x += bug.vx * (deltaTime / 16);
+            bug.y += bug.vy * (deltaTime / 16);
             bug.element.style.transform = `translate(${bug.x}px, ${bug.y}px)`;
 
             if (bug.x < -100 || bug.x > gameScreen.clientWidth + 100 || bug.y < -100 || bug.y > gameScreen.clientHeight + 100) {
@@ -186,7 +174,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Função chamada ao clicar em um bug
     function squash(bug) {
         if (!isGameRunning || !bug.element.parentNode) return;
 
@@ -205,11 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
         createParticles(centerX, centerY, bug.isBoss ? 50 : 15);
         
         const timeNow = Date.now();
-        if (timeNow - lastSquashTime < 1500) {
-            combo++;
-        } else {
-            combo = 1;
-        }
+        if (timeNow - lastSquashTime < 1500) { combo++; } else { combo = 1; }
         lastSquashTime = timeNow;
         
         const points = (bug.isBoss ? 50 : 10) * combo;
@@ -225,32 +208,25 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => gameContainer.classList.remove('shake'), 500);
         }
 
-        if (Math.random() < 0.25) {
-            createPowerUp(centerX, centerY);
-        }
+        if (Math.random() < 0.25) { createPowerUp(centerX, centerY); }
     }
 
     // --- FUNÇÕES PRINCIPAIS DO JOGO (START, STOP, LOOP) ---
-
-    // Inicia o jogo
     function startGame() {
         isGameRunning = true;
-        score = 0;
-        combo = 1;
-        timeLeft = 60;
-        bugCreationIntervalMs = 1200;
+        score = 0; combo = 1; timeLeft = 60;
+        bugCreationIntervalMs = 1800; // Reseta o intervalo de spawn
+        velocidadeAtual = 1.2; // Reseta a velocidade
         timeToNextDifficultyIncrease = 5000;
         timeToNextBug = 0;
 
-        gameScreen.innerHTML = ''; // Limpa a tela de elementos antigos
-        bugs = [];
-        powerups = [];
-        particles = [];
+        gameScreen.innerHTML = '';
+        bugs = []; powerups = []; particles = [];
 
         scoreDisplay.textContent = score;
         comboDisplay.textContent = `x${combo}`;
         timerDisplay.textContent = timeLeft;
-        gameScreen.appendChild(startButton); // Garante que o botão está no lugar certo
+        gameScreen.appendChild(startButton);
         startButton.style.display = 'none';
 
         playSound(sounds.start);
@@ -266,7 +242,6 @@ document.addEventListener('DOMContentLoaded', () => {
         gameLoopId = requestAnimationFrame(gameLoop);
     }
     
-    // Para o jogo
     function stopGame() {
         isGameRunning = false;
         cancelAnimationFrame(gameLoopId);
@@ -283,7 +258,6 @@ document.addEventListener('DOMContentLoaded', () => {
         startButton.style.display = 'block';
     }
     
-    // O loop principal do jogo, chamado a cada frame
     function gameLoop(timestamp) {
         if (!isGameRunning) return;
         const deltaTime = timestamp - lastTime;
@@ -295,10 +269,20 @@ document.addEventListener('DOMContentLoaded', () => {
             timeToNextBug = bugCreationIntervalMs;
         }
         
+        // ==================================================================
+        // LÓGICA DE DIFICULDADE CORRIGIDA
+        // ==================================================================
         timeToNextDifficultyIncrease -= deltaTime;
         if (timeToNextDifficultyIncrease <= 0) {
-            if (bugCreationIntervalMs > 300) bugCreationIntervalMs -= 50;
-            timeToNextDifficultyIncrease = 5000;
+            // Diminui o tempo de spawn (até um limite)
+            if (bugCreationIntervalMs > 400) {
+                bugCreationIntervalMs -= 75;
+            }
+            // Aumenta a velocidade dos bugs de forma linear e controlada
+            if (velocidadeAtual < 3.5) {
+                velocidadeAtual += 0.1;
+            }
+            timeToNextDifficultyIncrease = 5000; // Reseta o contador
         }
 
         updateBugs(deltaTime);
@@ -307,37 +291,23 @@ document.addEventListener('DOMContentLoaded', () => {
         gameLoopId = requestAnimationFrame(gameLoop);
     }
 
-    // Atualiza o cronômetro a cada segundo
     function updateTimer() {
         if (!isGameRunning) return;
         timeLeft--;
         timerDisplay.textContent = timeLeft;
-        if (timeLeft <= 0) {
-            stopGame();
-        } else {
-            timerId = setTimeout(updateTimer, 1000);
-        }
+        if (timeLeft <= 0) { stopGame(); } 
+        else { timerId = setTimeout(updateTimer, 1000); }
     }
 
     // --- INICIALIZAÇÃO E EVENT LISTENERS ---
-
-    // Mostra o High Score salvo
     highscoreDisplay.textContent = highScore;
-
-    // Inicia o jogo ao clicar no botão
     startButton.addEventListener('click', startGame);
-
-    // Redimensiona o canvas de fundo quando a janela muda de tamanho
     window.addEventListener('resize', debounce(() => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         const newColumns = Math.floor(canvas.width / fontSize);
-        while (drops.length < newColumns) {
-            drops.push(1);
-        }
+        while (drops.length < newColumns) { drops.push(1); }
         drops.length = newColumns;
     }, 250));
-
-    // Inicia o efeito Matrix de fundo
     setInterval(drawMatrix, 50);
 });
