@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Esmaga-Bug: Edição Estável</title>
+    <title>Esmaga-Bug: Edição Lendária</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -19,17 +19,13 @@
             <div class="info-bar-bottom">
                 <span class="score-box">TEMPO: <span id="timer-display">60</span></span>
                 <span class="score-box">COMBO: <span id="combo-display">x1</span></span>
+                <span class="score-box">BUFFS: <span id="buff-inventory">0</span></span> 
             </div>
         </div>
 
         <div id="game-screen">
+            <div id="buff-effect-overlay"></div>
             <button id="start-button">Iniciar Jogo</button>
-        </div>
-    </div>
-
-    <div class="footer">
-            <p>Desenvolvido para o Software Freedom Day</p>
-            <p>Um projeto de @dev-netinho</p>
         </div>
     </div>
 
@@ -39,6 +35,7 @@
     <audio id="sound-gameover" src="https://cdn.pixabay.com/download/audio/2022/10/24/audio_39b047f3b8.mp3"></audio>
     <audio id="sound-powerup" src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_a5a87c1a32.mp3"></audio>
     <audio id="sound-boss-hit" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_a29b35b674.mp3"></audio>
+    <audio id="sound-buff-use" src="https://cdn.pixabay.com/download/audio/2022/03/24/audio_788109633e.mp3"></audio>
     
     <script src="script.js"></script>
 </body>

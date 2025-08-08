@@ -4,133 +4,125 @@
     --font-size-info: 1em;
     --font-size-title: 1.8em;
 }
-
 body, html {
-    height: 100%;
-    margin: 0;
-    overflow: hidden;
-    background-color: #000;
-    color: #abb2bf;
-    font-family: 'Courier New', Courier, monospace;
+    height: 100%; margin: 0; overflow: hidden; background-color: #000; color: #abb2bf; font-family: 'Courier New', Courier, monospace;
 }
-
 #matrix-background {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; filter: blur(1px);
 }
-
 #game-container {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
-    padding: 10px;
-    box-sizing: border-box; /* Garante que padding não aumente o tamanho total */
+    position: relative; z-index: 2; display: flex; flex-direction: column; width: 100%; height: 100%; padding: 10px; box-sizing: border-box;
 }
-
 .game-info-wrapper {
-    flex-shrink: 0; /* Impede que o container de info encolha */
-    padding-bottom: 10px;
+    flex-shrink: 0; padding-bottom: 10px;
 }
-
 h1 {
-    color: #61afef;
-    margin: 0 0 10px 0;
-    font-size: var(--font-size-title);
-    text-align: center;
+    color: #61afef; margin: 0 0 10px 0; font-size: var(--font-size-title); text-align: center;
 }
-
 .info-bar, .info-bar-bottom {
-    font-size: var(--font-size-info);
-    color: #98c379;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 5px;
-    margin-bottom: 5px;
+    font-size: var(--font-size-info); color: #98c379; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; margin-bottom: 5px;
 }
-
 .info-bar-bottom { color: #c678dd; }
-
 .score-box {
-    background-color: #282c34;
-    padding: 5px 10px;
-    border-radius: 5px;
-    flex: 1 1 120px; /* Flex-grow, Flex-shrink, Flex-basis */
-    text-align: center;
-    white-space: nowrap;
+    background-color: #282c34; padding: 5px 10px; border-radius: 5px; flex: 1 1 100px; text-align: center; white-space: nowrap;
 }
-
 #game-screen {
-    flex-grow: 1; /* Ocupa todo o espaço vertical restante */
-    min-height: 200px; /* Altura mínima para não sumir */
-    background-color: rgba(40, 44, 52, 0.75);
-    border: 2px solid #61afef;
-    border-radius: 5px;
-    position: relative;
-    overflow: hidden;
-    cursor: crosshair;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-grow: 1; min-height: 200px; background-color: rgba(40, 44, 52, 0.25); border: 2px solid #61afef; border-radius: 5px; position: relative; overflow: hidden; cursor: crosshair; display: flex; justify-content: center; align-items: center;
 }
-
 #start-button {
-    padding: 15px 30px;
-    font-size: 1.5em;
-    cursor: pointer;
-    background-color: #98c379;
-    color: #21252b;
-    border: none;
-    border-radius: 5px;
-    z-index: 100;
+    padding: 15px 30px; font-size: 1.5em; cursor: pointer; background-color: #98c379; color: #21252b; border: none; border-radius: 5px; z-index: 100;
 }
 
 /* --- ESTILOS DOS ELEMENTOS DO JOGO --- */
-.bug, .boss-bug {
+
+.bug, .boss-bug, .buff-item {
     position: absolute; background-size: contain; background-repeat: no-repeat; cursor: pointer;
+    animation: emerge 0.5s ease-out;
 }
-.bug { width: 40px; height: 40px; background-image: url('https://api.iconify.design/mdi/bug.svg?color=%23e06c75'); }
-.boss-bug { width: 70px; height: 70px; background-image: url('https://api.iconify.design/mdi/bug-outline.svg?color=%23e5c07b'); }
 
-.powerup {
-    position: absolute; width: 45px; height: 45px; background-size: contain; background-repeat: no-repeat; cursor: pointer; border-radius: 50%; box-shadow: 0 0 15px gold;
+/*
+ * ==================================================================
+ * AQUI VOCÊ TROCA O ÍCONE DO BUG NORMAL
+ * ==================================================================
+ */
+.bug { 
+    width: 40px; 
+    height: 40px;
+    /* Opção A: Usando um link. Troque a URL pela do seu novo ícone. */
+    background-image: url('https://api.iconify.design/mdi/virus-outline.svg?color=%23e06c75');
+
+    /* Opção B: Usando um arquivo local. Comente a linha de cima e descomente a de baixo. */
+    /* background-image: url('imagens/seu-bug-novo.svg'); */
 }
-.powerup[data-type="pull-request"] { background-color: #fff; background-image: url('https://api.iconify.design/mdi/source-pull.svg?color=%23282c34'); }
-.powerup[data-type="debugger"] { background-color: #fff; background-image: url('https://api.iconify.design/mdi/pause-circle.svg?color=%2361afef'); }
 
-/* --- ANIMAÇÕES --- */
-.bug, .boss-bug { animation: pulse 0.8s infinite alternate; }
-.boss-bug { animation-duration: 0.6s; }
-@keyframes pulse { to { transform: scale(1.1); } }
+/*
+ * ==================================================================
+ * AQUI VOCÊ TROCA O ÍCONE DO BOSS BUG
+ * ==================================================================
+ */
+.boss-bug {
+    width: 70px; 
+    height: 70px;
+    /*background-image: url('https://api.iconify.design/mdi/skull-crossbones-outline.svg?color=%23e06c75');*/
+    background-image: url('assets/bug.png');
+}
+
+/*
+ * ==================================================================
+ * AQUI VOCÊ TROCA O ÍCONE DO BUFF
+ * ==================================================================
+ */
+.buff-item {
+    width: 45px;
+    height: 45px;
+    filter: drop-shadow(0 0 8px #00ffcc); /* Brilho ciano para destacar */
+    animation: emerge 0.5s ease-out, float 2s ease-in-out infinite;
+
+    /* Opção A: Usando um link. */
+    /*background-image: url('https://api.iconify.design/mdi/shield-plus-outline.svg?color=%2300ffcc');*/
+
+    /* Opção B: Usando um arquivo local. */
+    background-image: url('assets/buff.png');
+}
+
+
+/* --- ANIMAÇÕES E EFEITOS --- */
+#buff-effect-overlay {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 1px; height: 1px;
+    background: radial-gradient(circle, rgba(0,255,204,0.7) 0%, rgba(97,175,239,0.3) 40%, rgba(97,175,239,0) 70%);
+    border-radius: 50%; z-index: 200; pointer-events: none; display: none;
+}
+#buff-effect-overlay.active {
+    display: block; animation: buff-explosion 0.8s ease-out forwards;
+}
+
+@keyframes emerge {
+    from { transform: scale(0.1); opacity: 0; filter: blur(5px); }
+    to { transform: scale(1); opacity: 1; filter: blur(0); }
+}
+@keyframes float {
+    0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); }
+}
 .hit { animation: hit 0.2s; }
 @keyframes hit { 50% { filter: brightness(3); } }
+@keyframes buff-explosion {
+    from { width: 1px; height: 1px; opacity: 1; }
+    to { width: 200%; height: 200%; opacity: 0; }
+}
+.bug-vanishing, .boss-bug-vanishing {
+    animation: vanish 0.3s ease-in forwards;
+}
+@keyframes vanish {
+    0% { filter: brightness(10) drop-shadow(0 0 15px white); transform: scale(1.2); }
+    100% { filter: brightness(0); transform: scale(0); opacity: 0; }
+}
 
-/* --- MEDIA QUERY PARA DESKTOPS (Telas a partir de 1024px de largura) --- */
+/* --- MEDIA QUERIES --- */
 @media (min-width: 1024px) {
-    :root {
-        --font-size-base: 16px;
-    }
-    #game-container {
-        flex-direction: row;
-        gap: 20px;
-        align-items: stretch;
-        width: 95vw;
-        height: 95vh;
-        max-width: 1400px;
-    }
-    .game-info-wrapper {
-        flex: 0 0 280px; /* Não cresce, não encolhe, base de 280px */
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding-bottom: 0;
-    }
-    .info-bar, .info-bar-bottom {
-        flex-direction: column;
-    }
-    #game-screen {
-        min-height: initial; /* Reseta a altura mínima */
-    }
+    :root { --font-size-base: 16px; }
+    #game-container { flex-direction: row; gap: 20px; align-items: stretch; width: 95vw; height: 95vh; max-width: 1400px; }
+    .game-info-wrapper { flex: 0 0 280px; display: flex; flex-direction: column; justify-content: center; padding-bottom: 0; }
+    .info-bar, .info-bar-bottom { flex-direction: column; }
+    #game-screen { min-height: initial; }
 }

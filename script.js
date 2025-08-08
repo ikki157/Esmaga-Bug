@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const highscoreDisplay = document.getElementById('highscore-display');
     const timerDisplay = document.getElementById('timer-display');
     const comboDisplay = document.getElementById('combo-display');
+    const buffInventoryDisplay = document.getElementById('buff-inventory');
+    const buffEffectOverlay = document.getElementById('buff-effect-overlay');
     const startButton = document.getElementById('start-button');
     const gameContainer = document.getElementById('game-container');
     const canvas = document.getElementById('matrix-background');
@@ -19,18 +21,19 @@ document.addEventListener('DOMContentLoaded', () => {
         gameOver: document.getElementById('sound-gameover'),
         powerup: document.getElementById('sound-powerup'),
         bossHit: document.getElementById('sound-boss-hit'),
+        buffUse: document.getElementById('sound-buff-use'),
     };
 
     // --- VARIÁVEIS DE ESTADO DO JOGO ---
     let score = 0, timeLeft = 60, combo = 1, lastSquashTime = 0;
-    let bugCreationIntervalMs = 1200;
-    let bugLifetimeMs = 1800;
-    let isGameRunning = false;
+    let bugCreationIntervalMs = 1200, bugLifetimeMs = 1800;
+    let isGameRunning = false, isBuffActive = false;
     let lastTime = 0, timeToNextBug = 0, timeToNextDifficultyIncrease = 5000;
-    let bugs = [];
+    let bugs = [], powerups = [];
     let highScore = localStorage.getItem('bugSmasherHighScore') || 0;
     let gameLoopId, timerId;
     let screenWidth = 0, screenHeight = 0;
+    let buffCount = 0;
 
     // --- CONFIGURAÇÕES DO CANVAS DE FUNDO ---
     canvas.width = window.innerWidth;
@@ -40,18 +43,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let drops = Array(Math.floor(canvas.width / fontSize)).fill(1);
 
     // --- FUNÇÕES AUXILIARES ---
-
-    /**
-     * Toca um arquivo de áudio.
-     */
     function playSound(sound) {
         sound.currentTime = 0;
         sound.play().catch(error => console.log(`Erro ao tocar som: ${error.message}`));
     }
 
-    /**
-     * Desenha um frame da animação de fundo "Matrix".
-     */
     function drawMatrix() {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -65,9 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    /**
-     * Limita a frequência com que uma função pode ser chamada.
-     */
     function debounce(func, wait) {
         let timeout;
         return function executedFunction(...args) {
@@ -78,10 +71,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- LÓGICA DO JOGO ---
-
-    /**
-     * Gera uma posição aleatória para um objeto dentro dos limites da tela.
-     */
     function gerarPosicaoAleatoriaDentroDaCaixa(boxWidth, boxHeight, objectWidth, objectHeight) {
         const maxX = boxWidth - objectWidth;
         const maxY = boxHeight - objectHeight;
@@ -89,115 +78,147 @@ document.addEventListener('DOMContentLoaded', () => {
         const randomY = Math.floor(Math.random() * maxY);
         return { x: randomX, y: randomY };
     }
+    
+    function spawnEntity() {
+        if (isBuffActive) return;
+        const roll = Math.random();
+        if (roll < 0.1 && powerups.length === 0) {
+            createBuff();
+        } else if (roll < 0.2) {
+            createBug(true);
+        } else {
+            createBug(false);
+        }
+    }
 
-    /**
-     * Cria um novo bug em uma posição aleatória DENTRO da tela.
-     */
-    function createBug() {
-        const isBoss = Math.random() < 0.1 && bugs.filter(b => b.isBoss).length === 0;
+    function createBug(isBoss) {
         const element = document.createElement('div');
         element.classList.add(isBoss ? 'boss-bug' : 'bug');
-
         const objectWidth = isBoss ? 70 : 40;
         const objectHeight = isBoss ? 70 : 40;
-
         const position = gerarPosicaoAleatoriaDentroDaCaixa(screenWidth, screenHeight, objectWidth, objectHeight);
-        
-        const bug = { 
-            element, 
-            x: position.x, y: position.y,
-            isBoss,
-            health: isBoss ? 5 : 1 
-        };
-
+        const bug = { element, x: position.x, y: position.y, isBoss, health: isBoss ? 5 : 1 };
         element.style.left = `${bug.x}px`;
         element.style.top = `${bug.y}px`;
-        
-        element.addEventListener('click', (e) => {
-            e.stopPropagation();
-            squash(bug);
-        });
-
+        element.addEventListener('click', () => squash(bug));
         const timeoutId = setTimeout(() => {
             if(bug.element.parentNode) {
                 bug.element.remove();
                 bugs = bugs.filter(b => b !== bug);
             }
-        }, bugLifetimeMs);
-        
+        }, bugLifetimeMs + (isBoss ? 1000 : 0));
         bug.timeoutId = timeoutId;
         bugs.push(bug);
         gameScreen.appendChild(element);
     }
 
-    /**
-     * Função executada quando um bug é clicado.
-     */
+    function createBuff() {
+        const element = document.createElement('div');
+        element.classList.add('buff-item');
+        const position = gerarPosicaoAleatoriaDentroDaCaixa(screenWidth, screenHeight, 45, 45);
+        const powerup = { element, x: position.x, y: position.y };
+        element.style.left = `${powerup.x}px`;
+        element.style.top = `${powerup.y}px`;
+        element.addEventListener('click', () => collectBuff(powerup));
+        powerups.push(powerup);
+        gameScreen.appendChild(element);
+    }
+    
+    function collectBuff(powerup) {
+        if (!isGameRunning || !powerup.element.parentNode) return;
+        playSound(sounds.powerup);
+        buffCount++;
+        buffInventoryDisplay.textContent = buffCount;
+        powerup.element.remove();
+        powerups = powerups.filter(p => p !== powerup);
+    }
+    
+    function useBuff() {
+        if (!isGameRunning || buffCount <= 0 || isBuffActive) return;
+        isBuffActive = true;
+        buffCount--;
+        buffInventoryDisplay.textContent = buffCount;
+        clearTimeout(timerId);
+        buffEffectOverlay.classList.add('active');
+        playSound(sounds.buffUse);
+        vanishNextBug();
+        setTimeout(() => {
+            buffEffectOverlay.classList.remove('active');
+        }, 800);
+    }
+
+    function vanishNextBug() {
+        if (bugs.length === 0) {
+            endBuffSequence();
+            return;
+        }
+        const bugToVanish = bugs.shift();
+        bugToVanish.element.classList.add(bugToVanish.isBoss ? 'boss-bug-vanishing' : 'bug-vanishing');
+        playSound(sounds.squash);
+        score += (bugToVanish.isBoss ? 50 : 10) * combo;
+        scoreDisplay.textContent = score;
+        setTimeout(() => {
+            bugToVanish.element.remove();
+        }, 300);
+        setTimeout(vanishNextBug, 150);
+    }
+
+    function endBuffSequence() {
+        isBuffActive = false;
+        timerId = setTimeout(updateTimer, 1000);
+    }
+
     function squash(bug) {
         if (!isGameRunning || !bug.element.parentNode) return;
-
         clearTimeout(bug.timeoutId);
         bug.health--;
         bug.element.classList.add('hit');
         setTimeout(() => bug.element.classList.remove('hit'), 100);
-
         if (bug.health > 0) {
             playSound(sounds.bossHit);
             return;
         }
-        
         playSound(sounds.squash);
-        
         const timeNow = Date.now();
         if (timeNow - lastSquashTime < 1500) { combo++; } else { combo = 1; }
         lastSquashTime = timeNow;
-        
         const points = (bug.isBoss ? 50 : 10) * combo;
         score += points;
         scoreDisplay.textContent = score;
         comboDisplay.textContent = `x${combo}`;
-        
         bug.element.remove();
         bugs = bugs.filter(b => b !== bug);
-        
-        if (bug.isBoss) {
-            gameContainer.classList.add('shake');
-            setTimeout(() => gameContainer.classList.remove('shake'), 500);
-        }
     }
 
     // --- FUNÇÕES PRINCIPAIS DE CONTROLE DO JOGO ---
-
     function startGame() {
         screenWidth = gameScreen.clientWidth;
         screenHeight = gameScreen.clientHeight;
-
         if (screenWidth === 0 || screenHeight === 0) {
             alert("Erro ao iniciar. Por favor, recarregue a página.");
             return;
         }
-
         isGameRunning = true;
-        score = 0; combo = 1; timeLeft = 60;
+        isBuffActive = false;
+        score = 0; combo = 1; timeLeft = 60; buffCount = 0;
         bugCreationIntervalMs = 1200;
         bugLifetimeMs = 1800;
         timeToNextDifficultyIncrease = 5000;
         timeToNextBug = 0;
-
         gameScreen.innerHTML = '';
-        bugs = [];
-        
+        bugs = []; powerups = [];
+        buffInventoryDisplay.textContent = buffCount;
+        scoreDisplay.textContent = score;
+        comboDisplay.textContent = `x${combo}`;
+        timerDisplay.textContent = timeLeft;
         gameScreen.appendChild(startButton);
         startButton.style.display = 'none';
-        
         playSound(sounds.start);
         sounds.music.volume = 0.3;
         sounds.music.currentTime = 0;
         sounds.music.play();
-
         clearTimeout(timerId);
         timerId = setTimeout(updateTimer, 1000);
-        
         lastTime = performance.now();
         cancelAnimationFrame(gameLoopId);
         gameLoopId = requestAnimationFrame(gameLoop);
@@ -207,18 +228,14 @@ document.addEventListener('DOMContentLoaded', () => {
         isGameRunning = false;
         cancelAnimationFrame(gameLoopId);
         clearTimeout(timerId);
-        
         bugs.forEach(bug => clearTimeout(bug.timeoutId));
-
         playSound(sounds.gameOver);
         sounds.music.pause();
-        
         if (score > highScore) {
             highScore = score;
             localStorage.setItem('bugSmasherHighScore', highScore);
             highscoreDisplay.textContent = highScore;
         }
-        
         startButton.style.display = 'block';
     }
     
@@ -226,25 +243,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isGameRunning) return;
         const deltaTime = timestamp - lastTime;
         lastTime = timestamp;
-
         timeToNextBug -= deltaTime;
         if (timeToNextBug <= 0) {
-            createBug();
+            spawnEntity();
             timeToNextBug = bugCreationIntervalMs;
         }
-        
-        timeToNextDifficultyIncrease -= deltaTime;
-        if (timeToNextDifficultyIncrease <= 0) {
-            if (bugCreationIntervalMs > 400) bugCreationIntervalMs -= 50;
-            if (bugLifetimeMs > 700) bugLifetimeMs -= 50;
-            timeToNextDifficultyIncrease = 5000;
+        if (!isBuffActive) {
+            timeToNextDifficultyIncrease -= deltaTime;
+            if (timeToNextDifficultyIncrease <= 0) {
+                if (bugCreationIntervalMs > 400) bugCreationIntervalMs -= 50;
+                if (bugLifetimeMs > 700) bugLifetimeMs -= 50;
+                timeToNextDifficultyIncrease = 5000;
+            }
         }
-        
         gameLoopId = requestAnimationFrame(gameLoop);
     }
 
     function updateTimer() {
-        if (!isGameRunning) return;
+        if (!isGameRunning || isBuffActive) return;
         timeLeft--;
         timerDisplay.textContent = timeLeft;
         if (timeLeft <= 0) {
@@ -257,6 +273,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- INICIALIZAÇÃO E EVENT LISTENERS ---
     highscoreDisplay.textContent = highScore;
     startButton.addEventListener('click', startGame);
+    window.addEventListener('keydown', (e) => {
+        if ((e.key === 'd' || e.key === 'D') && isGameRunning) {
+            useBuff();
+        }
+    });
     window.addEventListener('resize', debounce(() => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -264,7 +285,5 @@ document.addEventListener('DOMContentLoaded', () => {
         while (drops.length < newColumns) { drops.push(1); }
         drops.length = newColumns;
     }, 250));
-    
-    // O setInterval para o fundo é iniciado aqui, garantindo que a função drawMatrix exista.
     setInterval(drawMatrix, 50);
 });
