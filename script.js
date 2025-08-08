@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let timeLeft = 60;
     let combo = 1;
     let lastSquashTime = 0;
-    let bugCreationIntervalMs = 1800; // Aumentamos o tempo inicial entre spawns
+    let bugCreationIntervalMs = 1800;
     let isGameRunning = false;
     let lastTime = 0;
     let timeToNextBug = 0;
@@ -38,8 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let highScore = localStorage.getItem('bugSmasherHighScore') || 0;
     let gameLoopId;
     let timerId;
-    
-    // NOVO: Variável para controlar a velocidade dos bugs de forma linear
     let velocidadeAtual = 1.2;
 
     // --- CONFIGURAÇÕES DO CANVAS DE FUNDO ---
@@ -107,50 +105,61 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // ==================================================================
-    // FUNÇÃO createBug TOTALMENTE REESCRITA E CORRIGIDA
+    // FUNÇÃO createBug COM LÓGICA DE MOVIMENTO COMPLETAMENTE REFEITA
     // ==================================================================
     function createBug() {
-        const isBoss = Math.random() < 0.1 && bugs.filter(b => b.isBoss).length === 0;
+        const isBoss = Math.random() < 0.08 && bugs.filter(b => b.isBoss).length === 0;
         const element = document.createElement('div');
         const edge = Math.floor(Math.random() * 4);
-        let x, y, vx, vy;
+        
+        let spawnX, spawnY;
+        let targetX, targetY;
 
-        // A velocidade agora é baseada na variável global controlada
-        const speed = velocidadeAtual * (isBoss ? 0.7 : 1); // Boss é um pouco mais lento
+        const screenWidth = gameScreen.clientWidth;
+        const screenHeight = gameScreen.clientHeight;
 
         switch (edge) {
-            case 0: // Esquerda
-                x = -80;
-                y = Math.random() * gameScreen.clientHeight;
-                vx = speed;
-                vy = (Math.random() - 0.5) * speed * 0.5; // Movimento diagonal mais suave
+            case 0: // Nasce na Esquerda
+                spawnX = -80;
+                spawnY = Math.random() * screenHeight;
+                targetX = screenWidth + 80;
+                targetY = Math.random() * screenHeight;
                 break;
-            case 1: // Direita
-                x = gameScreen.clientWidth + 80;
-                y = Math.random() * gameScreen.clientHeight;
-                vx = -speed;
-                vy = (Math.random() - 0.5) * speed * 0.5;
+            case 1: // Nasce na Direita
+                spawnX = screenWidth + 80;
+                spawnY = Math.random() * screenHeight;
+                targetX = -80;
+                targetY = Math.random() * screenHeight;
                 break;
-            case 2: // Topo
-                y = -80;
-                x = Math.random() * gameScreen.clientWidth;
-                vy = speed;
-                vx = (Math.random() - 0.5) * speed * 0.5;
+            case 2: // Nasce no Topo
+                spawnX = Math.random() * screenWidth;
+                spawnY = -80;
+                targetX = Math.random() * screenWidth;
+                targetY = screenHeight + 80;
                 break;
-            default: // Base
-                y = gameScreen.clientHeight + 80;
-                x = Math.random() * gameScreen.clientWidth;
-                vy = -speed;
-                vx = (Math.random() - 0.5) * speed * 0.5;
+            default: // Nasce na Base
+                spawnX = Math.random() * screenWidth;
+                spawnY = screenHeight + 80;
+                targetX = Math.random() * screenWidth;
+                targetY = -80;
                 break;
         }
+
+        // Calcula o vetor de direção normalizado
+        const dx = targetX - spawnX;
+        const dy = targetY - spawnY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        const speed = velocidadeAtual * (isBoss ? 0.7 : 1);
+        const vx = (dx / distance) * speed;
+        const vy = (dy / distance) * speed;
         
         const bug = {
-            element, x, y, vx, vy, isBoss,
+            element, x: spawnX, y: spawnY, vx, vy, isBoss,
             health: isBoss ? 5 : 1,
         };
         element.classList.add(isBoss ? 'boss-bug' : 'bug');
-        element.style.transform = `translate(${x}px, ${y}px)`;
+        element.style.transform = `translate(${bug.x}px, ${bug.y}px)`;
         element.addEventListener('click', (e) => {
             e.stopPropagation();
             squash(bug);
@@ -162,7 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateBugs(deltaTime) {
         for (let i = bugs.length - 1; i >= 0; i--) {
             const bug = bugs[i];
-            // A normalização com deltaTime garante que o movimento seja suave e independente do FPS
             bug.x += bug.vx * (deltaTime / 16);
             bug.y += bug.vy * (deltaTime / 16);
             bug.element.style.transform = `translate(${bug.x}px, ${bug.y}px)`;
@@ -215,8 +223,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function startGame() {
         isGameRunning = true;
         score = 0; combo = 1; timeLeft = 60;
-        bugCreationIntervalMs = 1800; // Reseta o intervalo de spawn
-        velocidadeAtual = 1.2; // Reseta a velocidade
+        bugCreationIntervalMs = 1800;
+        velocidadeAtual = 1.2;
         timeToNextDifficultyIncrease = 5000;
         timeToNextBug = 0;
 
@@ -269,20 +277,15 @@ document.addEventListener('DOMContentLoaded', () => {
             timeToNextBug = bugCreationIntervalMs;
         }
         
-        // ==================================================================
-        // LÓGICA DE DIFICULDADE CORRIGIDA
-        // ==================================================================
         timeToNextDifficultyIncrease -= deltaTime;
         if (timeToNextDifficultyIncrease <= 0) {
-            // Diminui o tempo de spawn (até um limite)
             if (bugCreationIntervalMs > 400) {
                 bugCreationIntervalMs -= 75;
             }
-            // Aumenta a velocidade dos bugs de forma linear e controlada
             if (velocidadeAtual < 3.5) {
                 velocidadeAtual += 0.1;
             }
-            timeToNextDifficultyIncrease = 5000; // Reseta o contador
+            timeToNextDifficultyIncrease = 5000;
         }
 
         updateBugs(deltaTime);
