@@ -40,53 +40,27 @@ h1 {
     animation: emerge 0.5s ease-out;
 }
 
-/*
- * ==================================================================
- * AQUI VOCÊ TROCA O ÍCONE DO BUG NORMAL
- * ==================================================================
- */
+/* Ícone do bug normal atualizado para o seu arquivo local */
 .bug { 
-    width: 40px; 
-    height: 40px;
-    /* Opção A: Usando um link. Troque a URL pela do seu novo ícone. */
-    background-image: url('https://api.iconify.design/mdi/virus-outline.svg?color=%23e06c75');
-
-    /* Opção B: Usando um arquivo local. Comente a linha de cima e descomente a de baixo. */
-    /* background-image: url('imagens/seu-bug-novo.svg'); */
-}
-
-/*
- * ==================================================================
- * AQUI VOCÊ TROCA O ÍCONE DO BOSS BUG
- * ==================================================================
- */
-.boss-bug {
-    width: 70px; 
-    height: 70px;
-    /*background-image: url('https://api.iconify.design/mdi/skull-crossbones-outline.svg?color=%23e06c75');*/
+    width: 50px; height: 50px; 
     background-image: url('assets/bug.png');
 }
 
-/*
- * ==================================================================
- * AQUI VOCÊ TROCA O ÍCONE DO BUFF
- * ==================================================================
- */
+/* Ícone do boss bug também atualizado para o seu arquivo local */
+.boss-bug {
+    width: 85px; height: 85px; 
+    background-image: url('assets/bug.png'); /* Usando o mesmo bug, porém maior */
+}
+
+/* Ícone do buff atualizado para o seu arquivo local */
 .buff-item {
-    width: 45px;
-    height: 45px;
-    filter: drop-shadow(0 0 8px #00ffcc); /* Brilho ciano para destacar */
-    animation: emerge 0.5s ease-out, float 2s ease-in-out infinite;
-
-    /* Opção A: Usando um link. */
-    /*background-image: url('https://api.iconify.design/mdi/shield-plus-outline.svg?color=%2300ffcc');*/
-
-    /* Opção B: Usando um arquivo local. */
+    width: 55px; height: 55px; 
     background-image: url('assets/buff.png');
+    filter: drop-shadow(0 0 8px #00ffcc);
+    animation: emerge 0.5s ease-out, float 2s ease-in-out infinite;
 }
 
 
-/* --- ANIMAÇÕES E EFEITOS --- */
 #buff-effect-overlay {
     position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
     width: 1px; height: 1px;
@@ -97,6 +71,7 @@ h1 {
     display: block; animation: buff-explosion 0.8s ease-out forwards;
 }
 
+/* --- ANIMAÇÕES --- */
 @keyframes emerge {
     from { transform: scale(0.1); opacity: 0; filter: blur(5px); }
     to { transform: scale(1); opacity: 1; filter: blur(0); }

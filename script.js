@@ -25,14 +25,15 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- VARIÁVEIS DE ESTADO DO JOGO ---
-    let score = 0, timeLeft = 60, combo = 1, lastSquashTime = 0;
-    let bugCreationIntervalMs = 1200, bugLifetimeMs = 1800;
+    const SURVIVAL_TIME_SECONDS = 40;
+    let score = 0, timeLeft = SURVIVAL_TIME_SECONDS, combo = 1, lastSquashTime = 0;
+    let bugCreationIntervalMs = 800;
     let isGameRunning = false, isBuffActive = false;
-    let lastTime = 0, timeToNextBug = 0, timeToNextDifficultyIncrease = 5000;
+    let lastTime = 0, timeToNextBug = 0;
     let bugs = [], powerups = [];
     let highScore = localStorage.getItem('bugSmasherHighScore') || 0;
     let gameLoopId, timerId;
-    let screenWidth = 0, screenHeight = 0;
+    let screenWidth = 0, screenHeight = 0, screenArea = 0;
     let buffCount = 0;
 
     // --- CONFIGURAÇÕES DO CANVAS DE FUNDO ---
@@ -72,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DO JOGO ---
     function gerarPosicaoAleatoriaDentroDaCaixa(boxWidth, boxHeight, objectWidth, objectHeight) {
+        if (boxWidth <= objectWidth || boxHeight <= objectHeight) return { x: 0, y: 0 };
         const maxX = boxWidth - objectWidth;
         const maxY = boxHeight - objectHeight;
         const randomX = Math.floor(Math.random() * maxX);
@@ -82,32 +84,39 @@ document.addEventListener('DOMContentLoaded', () => {
     function spawnEntity() {
         if (isBuffActive) return;
         const roll = Math.random();
-        if (roll < 0.1 && powerups.length === 0) {
-            createBuff();
-        } else if (roll < 0.2) {
-            createBug(true);
-        } else {
-            createBug(false);
-        }
+        if (roll < 0.1 && powerups.length === 0) createBuff();
+        else if (roll < 0.2) createBug(true);
+        else createBug(false);
     }
 
     function createBug(isBoss) {
         const element = document.createElement('div');
         element.classList.add(isBoss ? 'boss-bug' : 'bug');
-        const objectWidth = isBoss ? 70 : 40;
-        const objectHeight = isBoss ? 70 : 40;
+        const objectWidth = isBoss ? 85 : 50;
+        const objectHeight = isBoss ? 85 : 50;
         const position = gerarPosicaoAleatoriaDentroDaCaixa(screenWidth, screenHeight, objectWidth, objectHeight);
-        const bug = { element, x: position.x, y: position.y, isBoss, health: isBoss ? 5 : 1 };
+        const bug = { element, x: position.x, y: position.y, isBoss, health: isBoss ? 5 : 1, width: objectWidth, height: objectHeight, timeUntilReproduction: 5000 + Math.random() * 2000 };
         element.style.left = `${bug.x}px`;
         element.style.top = `${bug.y}px`;
         element.addEventListener('click', () => squash(bug));
-        const timeoutId = setTimeout(() => {
-            if(bug.element.parentNode) {
-                bug.element.remove();
-                bugs = bugs.filter(b => b !== bug);
-            }
-        }, bugLifetimeMs + (isBoss ? 1000 : 0));
-        bug.timeoutId = timeoutId;
+        bugs.push(bug);
+        gameScreen.appendChild(element);
+    }
+    
+    function spawnNearbyBug(parentBug) {
+        const element = document.createElement('div');
+        element.classList.add('bug');
+        const objectWidth = 50, objectHeight = 50;
+        const offsetX = (Math.random() - 0.5) * 200;
+        const offsetY = (Math.random() - 0.5) * 200;
+        let newX = parentBug.x + offsetX;
+        let newY = parentBug.y + offsetY;
+        newX = Math.max(0, Math.min(newX, screenWidth - objectWidth));
+        newY = Math.max(0, Math.min(newY, screenHeight - objectHeight));
+        const bug = { element, x: newX, y: newY, isBoss: false, health: 1, width: objectWidth, height: objectHeight, timeUntilReproduction: 7000 + Math.random() * 2000 };
+        element.style.left = `${bug.x}px`;
+        element.style.top = `${bug.y}px`;
+        element.addEventListener('click', () => squash(bug));
         bugs.push(bug);
         gameScreen.appendChild(element);
     }
@@ -115,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function createBuff() {
         const element = document.createElement('div');
         element.classList.add('buff-item');
-        const position = gerarPosicaoAleatoriaDentroDaCaixa(screenWidth, screenHeight, 45, 45);
+        const position = gerarPosicaoAleatoriaDentroDaCaixa(screenWidth, screenHeight, 55, 55);
         const powerup = { element, x: position.x, y: position.y };
         element.style.left = `${powerup.x}px`;
         element.style.top = `${powerup.y}px`;
@@ -170,7 +179,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function squash(bug) {
         if (!isGameRunning || !bug.element.parentNode) return;
-        clearTimeout(bug.timeoutId);
         bug.health--;
         bug.element.classList.add('hit');
         setTimeout(() => bug.element.classList.remove('hit'), 100);
@@ -194,17 +202,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function startGame() {
         screenWidth = gameScreen.clientWidth;
         screenHeight = gameScreen.clientHeight;
+        screenArea = screenWidth * screenHeight;
         if (screenWidth === 0 || screenHeight === 0) {
             alert("Erro ao iniciar. Por favor, recarregue a página.");
             return;
         }
-        isGameRunning = true;
-        isBuffActive = false;
-        score = 0; combo = 1; timeLeft = 60; buffCount = 0;
-        bugCreationIntervalMs = 1200;
-        bugLifetimeMs = 1800;
-        timeToNextDifficultyIncrease = 5000;
-        timeToNextBug = 0;
+        isGameRunning = true; isBuffActive = false;
+        score = 0; combo = 1; timeLeft = SURVIVAL_TIME_SECONDS; buffCount = 0;
+        bugCreationIntervalMs = 800;
+        timeToNextBug = 1000;
         gameScreen.innerHTML = '';
         bugs = []; powerups = [];
         buffInventoryDisplay.textContent = buffCount;
@@ -224,17 +230,22 @@ document.addEventListener('DOMContentLoaded', () => {
         gameLoopId = requestAnimationFrame(gameLoop);
     }
     
-    function stopGame() {
+    function stopGame(outcome) {
+        if (!isGameRunning) return;
         isGameRunning = false;
         cancelAnimationFrame(gameLoopId);
         clearTimeout(timerId);
-        bugs.forEach(bug => clearTimeout(bug.timeoutId));
         playSound(sounds.gameOver);
         sounds.music.pause();
         if (score > highScore) {
             highScore = score;
             localStorage.setItem('bugSmasherHighScore', highScore);
             highscoreDisplay.textContent = highScore;
+        }
+        if (outcome === 'win') {
+            alert(`Você venceu os bugs!\nPontuação final: ${score}`);
+        } else {
+            alert(`Os bugs dominaram o código! Você foi derrotado.\nPontuação final: ${score}`);
         }
         startButton.style.display = 'block';
     }
@@ -243,17 +254,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isGameRunning) return;
         const deltaTime = timestamp - lastTime;
         lastTime = timestamp;
-        timeToNextBug -= deltaTime;
-        if (timeToNextBug <= 0) {
-            spawnEntity();
-            timeToNextBug = bugCreationIntervalMs;
-        }
         if (!isBuffActive) {
-            timeToNextDifficultyIncrease -= deltaTime;
-            if (timeToNextDifficultyIncrease <= 0) {
-                if (bugCreationIntervalMs > 400) bugCreationIntervalMs -= 50;
-                if (bugLifetimeMs > 700) bugLifetimeMs -= 50;
-                timeToNextDifficultyIncrease = 5000;
+            timeToNextBug -= deltaTime;
+            if (timeToNextBug <= 0) {
+                spawnEntity();
+                if (bugCreationIntervalMs > 250) bugCreationIntervalMs -= 10;
+                timeToNextBug = bugCreationIntervalMs;
+            }
+            let totalBugArea = 0;
+            bugs.forEach(bug => {
+                bug.timeUntilReproduction -= deltaTime;
+                if (bug.timeUntilReproduction <= 0) {
+                    spawnNearbyBug(bug);
+                    bug.timeUntilReproduction = 6000 + Math.random() * 2000;
+                }
+                totalBugArea += (bug.width * bug.height);
+            });
+            if ((totalBugArea / screenArea) >= 0.75) {
+                stopGame('lose');
             }
         }
         gameLoopId = requestAnimationFrame(gameLoop);
@@ -264,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
         timeLeft--;
         timerDisplay.textContent = timeLeft;
         if (timeLeft <= 0) {
-            stopGame();
+            stopGame('win');
         } else {
             timerId = setTimeout(updateTimer, 1000);
         }
