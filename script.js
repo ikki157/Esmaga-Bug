@@ -23,8 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- VARIÁVEIS DE ESTADO DO JOGO ---
     let score = 0, timeLeft = 60, combo = 1, lastSquashTime = 0;
-    let bugCreationIntervalMs = 1200; // Bugs aparecem um pouco mais rápido
-    let bugLifetimeMs = 1800; // Tempo que um bug fica na tela antes de sumir
+    let bugCreationIntervalMs = 1200;
+    let bugLifetimeMs = 1800;
     let isGameRunning = false;
     let lastTime = 0, timeToNextBug = 0, timeToNextDifficultyIncrease = 5000;
     let bugs = [];
@@ -33,24 +33,54 @@ document.addEventListener('DOMContentLoaded', () => {
     let screenWidth = 0, screenHeight = 0;
 
     // --- CONFIGURAÇÕES DO CANVAS DE FUNDO ---
-    // ... (Seção do canvas permanece igual) ...
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     const letters = '01';
     const fontSize = 16;
     let drops = Array(Math.floor(canvas.width / fontSize)).fill(1);
-    function drawMatrix() { /* ... */ }
 
     // --- FUNÇÕES AUXILIARES ---
-    function playSound(sound) { /* ... */ }
-    function debounce(func, wait) { /* ... */ }
-
-    // ==================================================================
-    // SEÇÃO 4: NOVA LÓGICA DO JOGO
-    // ==================================================================
 
     /**
-     * Implementação exata da sua lógica para encontrar uma posição aleatória.
+     * Toca um arquivo de áudio.
+     */
+    function playSound(sound) {
+        sound.currentTime = 0;
+        sound.play().catch(error => console.log(`Erro ao tocar som: ${error.message}`));
+    }
+
+    /**
+     * Desenha um frame da animação de fundo "Matrix".
+     */
+    function drawMatrix() {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#0F0';
+        ctx.font = `${fontSize}px monospace`;
+        for (let i = 0; i < drops.length; i++) {
+            const text = letters.charAt(Math.floor(Math.random() * letters.length));
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+            if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+            drops[i]++;
+        }
+    }
+    
+    /**
+     * Limita a frequência com que uma função pode ser chamada.
+     */
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => { clearTimeout(timeout); func(...args); };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // --- LÓGICA DO JOGO ---
+
+    /**
+     * Gera uma posição aleatória para um objeto dentro dos limites da tela.
      */
     function gerarPosicaoAleatoriaDentroDaCaixa(boxWidth, boxHeight, objectWidth, objectHeight) {
         const maxX = boxWidth - objectWidth;
@@ -62,7 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Cria um novo bug em uma posição aleatória DENTRO da tela.
-     * O bug não se move, mas desaparece após um tempo.
      */
     function createBug() {
         const isBoss = Math.random() < 0.1 && bugs.filter(b => b.isBoss).length === 0;
@@ -72,13 +101,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const objectWidth = isBoss ? 70 : 40;
         const objectHeight = isBoss ? 70 : 40;
 
-        // Usa a nova função para obter uma posição segura
         const position = gerarPosicaoAleatoriaDentroDaCaixa(screenWidth, screenHeight, objectWidth, objectHeight);
         
         const bug = { 
             element, 
-            x: position.x, 
-            y: position.y,
+            x: position.x, y: position.y,
             isBoss,
             health: isBoss ? 5 : 1 
         };
@@ -91,7 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
             squash(bug);
         });
 
-        // Adiciona um timer para remover o bug se ele não for clicado
         const timeoutId = setTimeout(() => {
             if(bug.element.parentNode) {
                 bug.element.remove();
@@ -99,9 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, bugLifetimeMs);
         
-        // Guarda a referência do timeout para poder cancelar se o bug for clicado
         bug.timeoutId = timeoutId;
-
         bugs.push(bug);
         gameScreen.appendChild(element);
     }
@@ -112,9 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function squash(bug) {
         if (!isGameRunning || !bug.element.parentNode) return;
 
-        // Cancela o timer que removeria o bug automaticamente
         clearTimeout(bug.timeoutId);
-
         bug.health--;
         bug.element.classList.add('hit');
         setTimeout(() => bug.element.classList.remove('hit'), 100);
@@ -146,9 +168,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- FUNÇÕES PRINCIPAIS DE CONTROLE DO JOGO ---
 
-    /**
-     * Inicia um novo jogo.
-     */
     function startGame() {
         screenWidth = gameScreen.clientWidth;
         screenHeight = gameScreen.clientHeight;
@@ -165,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
         timeToNextDifficultyIncrease = 5000;
         timeToNextBug = 0;
 
-        gameScreen.innerHTML = ''; // Limpa a tela
+        gameScreen.innerHTML = '';
         bugs = [];
         
         gameScreen.appendChild(startButton);
@@ -184,15 +203,11 @@ document.addEventListener('DOMContentLoaded', () => {
         gameLoopId = requestAnimationFrame(gameLoop);
     }
     
-    /**
-     * Para o jogo.
-     */
     function stopGame() {
         isGameRunning = false;
         cancelAnimationFrame(gameLoopId);
         clearTimeout(timerId);
         
-        // Limpa todos os timeouts de bugs que ainda estão na tela
         bugs.forEach(bug => clearTimeout(bug.timeoutId));
 
         playSound(sounds.gameOver);
@@ -207,9 +222,6 @@ document.addEventListener('DOMContentLoaded', () => {
         startButton.style.display = 'block';
     }
     
-    /**
-     * O "coração" do jogo, chamado a cada frame.
-     */
     function gameLoop(timestamp) {
         if (!isGameRunning) return;
         const deltaTime = timestamp - lastTime;
@@ -223,7 +235,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         timeToNextDifficultyIncrease -= deltaTime;
         if (timeToNextDifficultyIncrease <= 0) {
-            // A dificuldade agora torna os bugs mais rápidos para aparecer e sumir
             if (bugCreationIntervalMs > 400) bugCreationIntervalMs -= 50;
             if (bugLifetimeMs > 700) bugLifetimeMs -= 50;
             timeToNextDifficultyIncrease = 5000;
@@ -232,14 +243,28 @@ document.addEventListener('DOMContentLoaded', () => {
         gameLoopId = requestAnimationFrame(gameLoop);
     }
 
-    function updateTimer() { /* ...código sem alterações... */ }
+    function updateTimer() {
+        if (!isGameRunning) return;
+        timeLeft--;
+        timerDisplay.textContent = timeLeft;
+        if (timeLeft <= 0) {
+            stopGame();
+        } else {
+            timerId = setTimeout(updateTimer, 1000);
+        }
+    }
 
     // --- INICIALIZAÇÃO E EVENT LISTENERS ---
     highscoreDisplay.textContent = highScore;
     startButton.addEventListener('click', startGame);
-    window.addEventListener('resize', debounce(() => { /* ... */ }, 250));
+    window.addEventListener('resize', debounce(() => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const newColumns = Math.floor(canvas.width / fontSize);
+        while (drops.length < newColumns) { drops.push(1); }
+        drops.length = newColumns;
+    }, 250));
+    
+    // O setInterval para o fundo é iniciado aqui, garantindo que a função drawMatrix exista.
     setInterval(drawMatrix, 50);
 });
-
-// O código omitido (...) é idêntico à versão anterior e está incluído no bloco completo acima.
-// As principais mudanças foram em createBug, squash e na lógica de dificuldade dentro do gameLoop.
